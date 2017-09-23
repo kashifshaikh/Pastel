@@ -14,7 +14,8 @@ open class PastelView: UIView {
         static let keyPath = "colors"
         static let key = "ColorChange"
     }
-    
+    fileprivate var stop:Bool = false
+    fileprivate var gradientInit:Bool = false
     @objc
     public enum PastelPoint: Int {
         case left
@@ -93,10 +94,22 @@ open class PastelView: UIView {
         gradient.frame = bounds
     }
     
-    public func startAnimation() {
+    /// Show gradient, but don't animate...yet
+    public func showGradient() {
         gradient.removeAllAnimations()
         setup()
+        gradientInit = true
+    }
+    
+    public func startAnimation() {
+        if !gradientInit {
+            showGradient()
+        }
         animateGradient()
+    }
+    
+    public func stopAnimation() {
+        stop = true
     }
     
     fileprivate func setup() {
@@ -135,7 +148,7 @@ open class PastelView: UIView {
         animation.toValue = currentGradientSet()
         animation.fillMode = kCAFillModeForwards
         animation.isRemovedOnCompletion = false
-        animation.delegate = self
+        animation.delegate = self        
         gradient.add(animation, forKey: Animation.key)
     }
     
@@ -143,14 +156,19 @@ open class PastelView: UIView {
         super.removeFromSuperview()
         gradient.removeAllAnimations()
         gradient.removeFromSuperlayer()
+        gradientInit = false
     }
 }
 
 extension PastelView: CAAnimationDelegate {
     public func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         if flag {
-            gradient.colors = currentGradientSet()
-            animateGradient()
+            if !stop {
+                gradient.colors = currentGradientSet()
+                animateGradient()
+            }else {
+                stop = false
+            }            
         }
     }
 }
